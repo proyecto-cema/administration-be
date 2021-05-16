@@ -21,7 +21,7 @@ public class Controller {
 
         LOG.info("Request");
 
-        return new ResponseEntity<>("Todo ok", HttpStatus.ACCEPTED);
+        return new ResponseEntity<>("Request Correcta.", HttpStatus.ACCEPTED);
     }
 
 }
