@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: administration-be
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: administration-be
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5 
+  template:
+    metadata:
+      labels:
+        app: administration-be
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+      - name: administration-be
+        image: cemaregistry.azurecr.io/cema/administration-be:$VERSION
+        ports:
+        - containerPort: 9022
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+        env:
+        - name: $ENV
+          value: "azure-vote-back"
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: administration-be
+spec:
+  type: NodePort
+  ports:
+  - port: 9022
+    nodePort: 30000
+  selector:
+    app: administration-be
