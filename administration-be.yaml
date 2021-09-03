@@ -11,7 +11,7 @@ spec:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 1
-  minReadySeconds: 5 
+  minReadySeconds: 5
   template:
     metadata:
       labels:
@@ -20,20 +20,21 @@ spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
       containers:
-      - name: administration-be
-        image: cemaregistry.azurecr.io/cema/administration-be:$VERSION
-        ports:
-        - containerPort: 9022
-        resources:
-          requests:
-            cpu: 250m
-          limits:
-            cpu: 500m
-        env:
-        - name: $ENV
-          value: "azure-vote-back"
+        - name: bovine-be
+          image: cemaregistry.azurecr.io/cema/administration-be:$VERSION
+          ports:
+            - containerPort: 30025
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 250m
+            limits:
+              cpu: 500m
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: $ENV
       imagePullSecrets:
-      - name: regcred
+        - name: regcred
 ---
 apiVersion: v1
 kind: Service
@@ -42,7 +43,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 9022
-    nodePort: 30000
+    - port: 30025
+      nodePort: 30025
   selector:
     app: administration-be
