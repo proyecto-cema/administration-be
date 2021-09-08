@@ -7,6 +7,7 @@ import com.cema.administration.exceptions.EstablishmentAlreadyExistsException;
 import com.cema.administration.exceptions.EstablishmentNotFoundException;
 import com.cema.administration.mapping.EstablishmentMapping;
 import com.cema.administration.repositories.EstablishmentRepository;
+import com.cema.administration.services.authorization.AuthorizationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -25,20 +26,29 @@ public class EstablishmentControllerTest {
     private EstablishmentRepository establishmentRepository;
     @Mock
     private EstablishmentMapping establishmentMapping;
+    @Mock
+    private AuthorizationService authorizationService;
+
+    private EstablishmentController establishmentController;
+
+    private final String cuig = "321";
 
     @BeforeEach
     public void setUp() {
         openMocks(this);
+        when(authorizationService.isOnTheSameEstablishment(cuig)).thenReturn(true);
+        when(authorizationService.getCurrentUserCuig()).thenReturn(cuig);
+        establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping, authorizationService);
     }
 
     @Test
     public void lookUpEstablishmentByCuigShouldAlwaysReturnEstablishmentWhenExists() {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
         Establishment establishment = Establishment.builder().build();
-        String cuig = "123";
+
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
         when(establishmentMapping.mapEntityToDomain(cemaEstablishment)).thenReturn(establishment);
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
+
         ResponseEntity<Establishment> result = establishmentController.lookUpEstablishmentByCuig(cuig);
         Establishment resultingUser = result.getBody();
 
@@ -52,17 +62,16 @@ public class EstablishmentControllerTest {
     public void lookUpEstablishmentByCuigShouldAlwaysReturnNotFoundWhenEstablishmentDoesntExists() {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
         Establishment establishment = Establishment.builder().build();
-        String cuig = "123";
-        when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
+
+        when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(null);
         when(establishmentMapping.mapEntityToDomain(cemaEstablishment)).thenReturn(establishment);
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
 
         Exception exception = assertThrows(EstablishmentNotFoundException.class, () -> {
-            establishmentController.lookUpEstablishmentByCuig("234");
+            establishmentController.lookUpEstablishmentByCuig(cuig);
         });
         String resultingMessage = exception.getMessage();
 
-        assertThat(resultingMessage, is("Establishment with cuig 234 doesn't exits"));
+        assertThat(resultingMessage, is("Establishment with cuig 321 doesn't exits"));
     }
 
     @Test
@@ -72,7 +81,6 @@ public class EstablishmentControllerTest {
 
         when(establishmentMapping.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
 
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
         ResponseEntity<String> result = establishmentController.registerEstablishment(establishment);
 
         HttpStatus resultingStatus = result.getStatusCode();
@@ -85,14 +93,12 @@ public class EstablishmentControllerTest {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
         Establishment establishment = Establishment.builder().build();
 
-        String cuig = "123";
         cemaEstablishment.setCuig(cuig);
         establishment.setCuig(cuig);
 
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
         when(establishmentMapping.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
 
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
         Exception exception = assertThrows(EstablishmentAlreadyExistsException.class, () -> {
             establishmentController.registerEstablishment(establishment);
         });
@@ -106,13 +112,14 @@ public class EstablishmentControllerTest {
     @Test
     public void updateEstablishmentShouldAlwaysReturnOKWhenEstablishmentUpdatedCorrectly() {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
-        Establishment establishment = Establishment.builder().build();
+        Establishment establishment = Establishment.builder()
+                .cuig(cuig)
+                .build();
 
-        when(establishmentRepository.findCemaEstablishmentByCuig(establishment.getCuig())).thenReturn(cemaEstablishment);
+        when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
         when(establishmentMapping.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
 
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
-        ResponseEntity<Establishment> result = establishmentController.updateEstablishment(establishment.getCuig(), establishment);
+        ResponseEntity<Establishment> result = establishmentController.updateEstablishment(cuig, establishment);
 
         HttpStatus resultingStatus = result.getStatusCode();
 
@@ -121,27 +128,24 @@ public class EstablishmentControllerTest {
 
     @Test
     public void updateEstablishmentShouldAlwaysReturnNotFoundWhenEstablishmentDoesntExists() {
-        CemaEstablishment cemaEstablishment = new CemaEstablishment();
         Establishment establishment = Establishment.builder().build();
-        String cuig = "123";
-        when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
 
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
+        when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(null);
+
 
         Exception exception = assertThrows(EstablishmentNotFoundException.class, () ->
-                establishmentController.updateEstablishment("234", establishment));
+                establishmentController.updateEstablishment(cuig, establishment));
         String resultingMessage = exception.getMessage();
 
-        assertThat(resultingMessage, is("Establishment with cuig 234 doesn't exits"));
+        assertThat(resultingMessage, is("Establishment with cuig 321 doesn't exits"));
     }
 
     @Test
     public void deleteShouldAlwaysReturnOKWhenEstablishmentExists() {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
-        String cuig = "123";
+
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
 
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
 
         ResponseEntity<Establishment> result = establishmentController.deleteEstablishment(cuig);
 
@@ -153,10 +157,9 @@ public class EstablishmentControllerTest {
     @Test
     public void deleteShouldAlwaysReturnNotFoundWhenUserDoesNotExists() {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
-        String cuig = "123";
+
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
 
-        EstablishmentController establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping);
 
         Exception exception = assertThrows(EstablishmentNotFoundException.class, () -> {
             establishmentController.deleteEstablishment("234");

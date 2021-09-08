@@ -1,5 +1,6 @@
 package com.cema.administration.config.filters;
 
+import com.cema.administration.domain.CemaUserDetails;
 import com.cema.administration.domain.User;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -48,8 +48,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
             if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(user.getRole());
-                UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getUserName(), "null",
-                        Arrays.asList(grantedAuthority));
+                CemaUserDetails userDetails = new CemaUserDetails(user.getUserName(), "null",
+                        Arrays.asList(grantedAuthority), user.getEstablishmentCuig());
 
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
