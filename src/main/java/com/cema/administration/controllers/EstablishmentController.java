@@ -57,7 +57,8 @@ public class EstablishmentController {
     @ApiOperation(value = "Register a new establishment to the database")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Establishment created successfully"),
-            @ApiResponse(code = 409, message = "The establishment you were trying to create already exists")
+            @ApiResponse(code = 409, message = "The establishment you were trying to create already exists"),
+            @ApiResponse(code = 401, message = "You are not allowed to register this establishment")
     })
     @PostMapping(value = BASE_URL, produces = {MediaType.APPLICATION_JSON_VALUE}, consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<String> registerEstablishment(
@@ -83,7 +84,8 @@ public class EstablishmentController {
     @ApiOperation(value = "Retrieve establishment from cuig sent data", response = Establishment.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully found establishment"),
-            @ApiResponse(code = 404, message = "Establishment not found")
+            @ApiResponse(code = 404, message = "Establishment not found"),
+            @ApiResponse(code = 401, message = "You are not allowed to view this establishment")
     })
     @GetMapping(value = BASE_URL + "{cuig}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Establishment> lookUpEstablishmentByCuig(
@@ -111,7 +113,8 @@ public class EstablishmentController {
     @ApiOperation(value = "Modifies an existent Establishment")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Establishment modified successfully"),
-            @ApiResponse(code = 404, message = "The establishment you were trying to modify doesn't exists")
+            @ApiResponse(code = 404, message = "The establishment you were trying to modify doesn't exists"),
+            @ApiResponse(code = 401, message = "You are not allowed to update this establishment")
     })
     @PutMapping(value = BASE_URL + "{cuig}", produces = {MediaType.APPLICATION_JSON_VALUE}, consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Establishment> updateEstablishment(
@@ -146,7 +149,8 @@ public class EstablishmentController {
     @ApiOperation(value = "Delete an existing establishment by cuig")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Establishment deleted successfully"),
-            @ApiResponse(code = 404, message = "The establishment you were trying to reach is not found")
+            @ApiResponse(code = 404, message = "The establishment you were trying to reach is not found"),
+            @ApiResponse(code = 401, message = "You are not allowed to delete this establishment")
     })
     @DeleteMapping(value = BASE_URL + "{cuig}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Establishment> deleteEstablishment(
