@@ -3,27 +3,57 @@ package com.cema.administration.controllers.handlers;
 import com.cema.administration.domain.ErrorResponse;
 import com.cema.administration.exceptions.EstablishmentAlreadyExistsException;
 import com.cema.administration.exceptions.EstablishmentNotFoundException;
+import com.cema.administration.exceptions.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @ControllerAdvice
-public class CemaExceptionHandler extends ResponseEntityExceptionHandler {
+public class CemaExceptionHandler {
 
     @ExceptionHandler(EstablishmentAlreadyExistsException.class)
     public final ResponseEntity<Object> handleEstablishmentAlreadyExistsException(EstablishmentAlreadyExistsException ex, WebRequest request) {
 
-        ErrorResponse error = new ErrorResponse("Establishment Already Exists", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
         return new ResponseEntity(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(EstablishmentNotFoundException.class)
     public final ResponseEntity<Object> handleEstablishmentNotFoundException(EstablishmentNotFoundException ex, WebRequest request) {
 
-        ErrorResponse error = new ErrorResponse("Establishment Not Found", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
         return new ResponseEntity(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public final ResponseEntity<Object> handleUnauthorizedException(UnauthorizedException ex, WebRequest request) {
+
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
+        return new ResponseEntity(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public final ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
+
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
+        return new ResponseEntity(error, HttpStatus.UNAUTHORIZED);
+    }
+
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public final ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
+        String message = "Missing or incorrect fields";
+        ErrorResponse error = new ErrorResponse(message, request.toString());
+
+        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+            error.getViolations().add(
+                    new ErrorResponse.Violation(fieldError.getField(), fieldError.getDefaultMessage()));
+        }
+        return new ResponseEntity(error, HttpStatus.BAD_REQUEST);
     }
 }

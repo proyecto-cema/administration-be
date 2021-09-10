@@ -3,6 +3,9 @@ package com.cema.administration.config;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 import springfox.documentation.builders.PathSelectors;
@@ -20,7 +23,7 @@ import java.util.ArrayList;
 public class Config {
     public static final Contact CONTACT = new Contact("Proyecto Cema", "https://cema.atlassian.net/jira/your-work", "merlinsn@gmail.com");
 
-    public  ApiInfo apiInfo;
+    public ApiInfo apiInfo;
 
     public Config(BuildProperties buildProperties) {
         this.apiInfo = new ApiInfo("Cema " + buildProperties.getName() + " API Documentation", "Swagger documentation of the " + buildProperties.getName() + " API", buildProperties.getVersion(), "urn:tos",
@@ -28,7 +31,7 @@ public class Config {
     }
 
     @Bean
-    public RestTemplate restTemplate(){
+    public RestTemplate restTemplate() {
         return new RestTemplate();
     }
 
@@ -53,5 +56,18 @@ public class Config {
         filter.setIncludeHeaders(true);
         filter.setAfterMessagePrefix("REQUEST DATA : ");
         return filter;
+    }
+
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        String hierarchy = "ADMIN > PATRON \n PATRON > PEON";
+        roleHierarchy.setHierarchy(hierarchy);
+        return roleHierarchy;
+    }
+
+    @Bean
+    public GrantedAuthorityDefaults grantedAuthorityDefaults() {
+        return new GrantedAuthorityDefaults("");
     }
 }
