@@ -20,7 +20,7 @@ spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
       containers:
-        - name: bovine-be
+        - name: administration-be
           image: cemaregistry.azurecr.io/cema/administration-be:$VERSION
           ports:
             - containerPort: 30025
