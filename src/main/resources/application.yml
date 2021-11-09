@@ -31,6 +31,10 @@ spring:
 back-end:
   users:
     url: "http://localhost:30023/v1/users"
+  bovine:
+    url: "http://localhost:30024/v1/"
+  activity:
+    url: "http://localhost:30026/v1/"
 
 ---
 spring:
@@ -42,6 +46,10 @@ spring:
 back-end:
   users:
     url: "http://192.168.100.5:30023/v1/users"
+  bovine:
+    url: "http://192.168.100.5:30024/v1/"
+  activity:
+    url: "http://192.168.100.5:30026/v1/"
 
 ---
 spring:
@@ -53,3 +61,7 @@ spring:
 back-end:
   users:
     url: "http://192.168.100.6:30023/v1/users"
+  bovine:
+    url: "http://192.168.100.6:30024/v1/"
+  activity:
+    url: "http://192.168.100.6:30026/v1/"

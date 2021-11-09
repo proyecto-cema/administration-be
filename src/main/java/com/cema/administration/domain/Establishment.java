@@ -22,6 +22,5 @@ public class Establishment {
     @ApiModelProperty(notes = "The email address to contact this establishment", example = "lahermosa@cema.com.ar")
     private String email;
     @ApiModelProperty(notes = "The the username of the owner of this establishment", example = "merlinds")
-    @NotEmpty(message = "OwnerName is required")
     private String ownerUserName;
 }

@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1")
@@ -169,6 +171,22 @@ public class EstablishmentController {
         }
         LOG.info("Not found");
         throw new EstablishmentNotFoundException(String.format("Establishment %s doesn't exits", cuig));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiOperation(value = "Retrieve all establishments", response = Establishment.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Listed all establishments")
+    })
+    @GetMapping(value = BASE_URL + "list", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<List<Establishment>> listEstablishments() {
+
+        List<CemaEstablishment> cemaEstablishments;
+        cemaEstablishments = establishmentRepository.findAll();
+
+        List<Establishment> establishments = cemaEstablishments.stream().map(establishmentMapping::mapEntityToDomain).collect(Collectors.toList());
+
+        return new ResponseEntity<>(establishments, HttpStatus.OK);
     }
 
 }
