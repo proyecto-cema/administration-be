@@ -1,6 +1,8 @@
-package com.cema.administration.services.client;
+package com.cema.administration.services.client.bovine.impl;
 
 import com.cema.administration.domain.bovine.Bovine;
+import com.cema.administration.services.authorization.AuthorizationService;
+import com.cema.administration.services.client.bovine.BovineClientService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -13,19 +15,24 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 
 @Service
-public class BovineClientService {
+public class BovineClientServiceImpl implements BovineClientService {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String PATH = "bovines/search?size=999";
 
     private final RestTemplate restTemplate;
     private final String url;
+    private final AuthorizationService authorizationService;
 
-    public BovineClientService(RestTemplate restTemplate, @Value("${back-end.bovine.url}") String url) {
+    public BovineClientServiceImpl(RestTemplate restTemplate, @Value("${back-end.bovine.url}") String url,
+                                   AuthorizationService authorizationService) {
         this.restTemplate = restTemplate;
         this.url = url;
+        this.authorizationService = authorizationService;
     }
 
-    public List<Bovine> getAllBovines(String authToken) {
+    @Override
+    public List<Bovine> getAllBovines() {
+        String authToken = authorizationService.getUserAuthToken();
         String searchUrl = url + PATH;
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);

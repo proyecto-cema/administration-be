@@ -12,8 +12,8 @@ import com.cema.administration.domain.report.LiveCost;
 import com.cema.administration.domain.report.Pregnancy;
 import com.cema.administration.domain.report.Weight;
 import com.cema.administration.domain.report.YearlyReport;
-import com.cema.administration.services.client.ActivityClientService;
-import com.cema.administration.services.client.BovineClientService;
+import com.cema.administration.services.client.activity.impl.ActivityClientServiceImpl;
+import com.cema.administration.services.client.bovine.BovineClientService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -28,7 +28,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,10 +48,10 @@ public class ReportingController {
 
     private final Logger LOG = LoggerFactory.getLogger(ReportingController.class);
 
-    private final ActivityClientService activityClientService;
+    private final ActivityClientServiceImpl activityClientService;
     private final BovineClientService bovineClientService;
 
-    public ReportingController(BovineClientService bovineClientService, ActivityClientService activityClientService) {
+    public ReportingController(BovineClientService bovineClientService, ActivityClientServiceImpl activityClientService) {
         this.bovineClientService = bovineClientService;
         this.activityClientService = activityClientService;
     }
@@ -65,7 +64,6 @@ public class ReportingController {
     })
     @GetMapping(value = BASE_URL + "/pregnancy", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<YearlyReport> getPregnancyReport(
-            @RequestHeader("Authorization") String authToken,
             @ApiParam(
                     value = "The year when the report starts.",
                     example = "2017")
@@ -80,7 +78,7 @@ public class ReportingController {
         Map<Integer, Integer> positives = new HashMap<>();
         Map<Integer, Integer> total = new HashMap<>();
 
-        List<Ultrasound> ultrasounds = activityClientService.getAllUltrasounds(authToken);
+        List<Ultrasound> ultrasounds = activityClientService.getAllUltrasounds();
 
         ultrasounds = ultrasounds.stream()
                 .filter(ultrasound -> StringUtils.hasText(ultrasound.getResult()))
@@ -172,7 +170,6 @@ public class ReportingController {
     })
     @GetMapping(value = BASE_URL + "/weight", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<YearlyReport> getWeightReport(
-            @RequestHeader("Authorization") String authToken,
             @ApiParam(
                     value = "The year when the report starts.",
                     example = "2017")
@@ -184,7 +181,7 @@ public class ReportingController {
 
         LOG.info("Request to create weight report");
 
-        List<Weighing> weightings = activityClientService.getAllWeightings(authToken);
+        List<Weighing> weightings = activityClientService.getAllWeightings();
         weightings = weightings.stream()
                 .filter(weighing -> StringUtils.hasText(weighing.getCategory()))
                 .filter(weighing -> weighing.getWeight() != null)
@@ -363,7 +360,6 @@ public class ReportingController {
     })
     @GetMapping(value = BASE_URL + "/live", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<YearlyReport> getLiveAnimalsReport(
-            @RequestHeader("Authorization") String authToken,
             @ApiParam(
                     value = "The year when the report starts.",
                     example = "2017")
@@ -375,7 +371,7 @@ public class ReportingController {
 
         LOG.info("Request to create live animals report");
 
-        List<Bovine> bovines = bovineClientService.getAllBovines(authToken);
+        List<Bovine> bovines = bovineClientService.getAllBovines();
 
         Map<String, Live> reports = new HashMap<>();
 
