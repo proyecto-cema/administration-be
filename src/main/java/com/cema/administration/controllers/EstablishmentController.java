@@ -3,12 +3,13 @@ package com.cema.administration.controllers;
 import com.cema.administration.constants.Messages;
 import com.cema.administration.domain.Establishment;
 import com.cema.administration.entities.CemaEstablishment;
-import com.cema.administration.exceptions.EstablishmentAlreadyExistsException;
-import com.cema.administration.exceptions.EstablishmentNotFoundException;
+import com.cema.administration.exceptions.AlreadyExistsException;
+import com.cema.administration.exceptions.NotFoundException;
 import com.cema.administration.exceptions.UnauthorizedException;
 import com.cema.administration.mapping.EstablishmentMapping;
 import com.cema.administration.repositories.EstablishmentRepository;
 import com.cema.administration.services.authorization.AuthorizationService;
+import com.cema.administration.services.validation.EstablishmentValidationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -47,13 +48,18 @@ public class EstablishmentController {
     private final EstablishmentRepository establishmentRepository;
     private final EstablishmentMapping establishmentMapping;
     private final AuthorizationService authorizationService;
+    private final EstablishmentValidationService establishmentValidationService;
 
-    public EstablishmentController(EstablishmentRepository establishmentRepository, EstablishmentMapping establishmentMapping,
-                                   AuthorizationService authorizationService) {
+    public EstablishmentController(EstablishmentRepository establishmentRepository,
+                                   EstablishmentMapping establishmentMapping,
+                                   AuthorizationService authorizationService,
+                                   EstablishmentValidationService establishmentValidationService) {
         this.establishmentRepository = establishmentRepository;
         this.establishmentMapping = establishmentMapping;
         this.authorizationService = authorizationService;
+        this.establishmentValidationService = establishmentValidationService;
     }
+
 
     @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation(value = "Register a new establishment to the database")
@@ -73,7 +79,7 @@ public class EstablishmentController {
         CemaEstablishment existsEstablishment = establishmentRepository.findCemaEstablishmentByCuig(establishment.getCuig());
         if (existsEstablishment != null) {
             LOG.info("Establishment cuig already exists");
-            throw new EstablishmentAlreadyExistsException(String.format("The establishment with cuig %s already exists", establishment.getCuig()));
+            throw new AlreadyExistsException(String.format("The establishment with cuig %s already exists", establishment.getCuig()));
         }
 
         CemaEstablishment newEstablishment = establishmentMapping.mapDomainToEntity(establishment);
@@ -81,6 +87,37 @@ public class EstablishmentController {
         establishmentRepository.save(newEstablishment);
 
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @ApiOperation(value = "Validate establishment from cuig sent data", response = Establishment.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "Establishment is valid"),
+            @ApiResponse(code = 404, message = "Establishment not found"),
+            @ApiResponse(code = 401, message = "You are not allowed to view this establishment"),
+            @ApiResponse(code = 422, message = "Invalid Establishment")
+    })
+    @GetMapping(value = BASE_URL + "validate/{cuig}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Void> validateEstablishmentByCuig(
+            @ApiParam(
+                    value = "The cuig of the establishment you are looking for.",
+                    example = "123")
+            @PathVariable("cuig") String cuig) {
+
+        LOG.info("Request for establishment with {}", cuig);
+
+        if (!authorizationService.isOnTheSameEstablishment(cuig)) {
+            throw new UnauthorizedException(String.format(Messages.OUTSIDE_ESTABLISHMENT, cuig));
+        }
+
+        CemaEstablishment cemaEstablishment = establishmentRepository.findCemaEstablishmentByCuig(cuig);
+        if (cemaEstablishment == null) {
+            throw new NotFoundException(String.format("Establishment with cuig %s doesn't exits", cuig));
+        }
+        Establishment establishment = establishmentMapping.mapEntityToDomain(cemaEstablishment);
+
+        establishmentValidationService.validateEstablishmentForUsage(establishment);
+
+        return ResponseEntity.noContent().build();
     }
 
     @ApiOperation(value = "Retrieve establishment from cuig sent data", response = Establishment.class)
@@ -104,7 +141,7 @@ public class EstablishmentController {
 
         CemaEstablishment cemaEstablishment = establishmentRepository.findCemaEstablishmentByCuig(cuig);
         if (cemaEstablishment == null) {
-            throw new EstablishmentNotFoundException(String.format("Establishment with cuig %s doesn't exits", cuig));
+            throw new NotFoundException(String.format("Establishment with cuig %s doesn't exits", cuig));
         }
         Establishment establishment = establishmentMapping.mapEntityToDomain(cemaEstablishment);
 
@@ -136,7 +173,7 @@ public class EstablishmentController {
         CemaEstablishment cemaEstablishment = establishmentRepository.findCemaEstablishmentByCuig(cuig);
         if (cemaEstablishment == null) {
             LOG.info("Establishment doesn't exists");
-            throw new EstablishmentNotFoundException(String.format("Establishment with cuig %s doesn't exits", cuig));
+            throw new NotFoundException(String.format("Establishment with cuig %s doesn't exits", cuig));
         }
 
 
@@ -170,7 +207,7 @@ public class EstablishmentController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         LOG.info("Not found");
-        throw new EstablishmentNotFoundException(String.format("Establishment %s doesn't exits", cuig));
+        throw new NotFoundException(String.format("Establishment %s doesn't exits", cuig));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

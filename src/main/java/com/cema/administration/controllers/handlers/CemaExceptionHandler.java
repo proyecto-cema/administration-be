@@ -1,9 +1,10 @@
 package com.cema.administration.controllers.handlers;
 
 import com.cema.administration.domain.ErrorResponse;
-import com.cema.administration.exceptions.EstablishmentAlreadyExistsException;
-import com.cema.administration.exceptions.EstablishmentNotFoundException;
+import com.cema.administration.exceptions.AlreadyExistsException;
+import com.cema.administration.exceptions.NotFoundException;
 import com.cema.administration.exceptions.UnauthorizedException;
+import com.cema.administration.exceptions.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -16,15 +17,15 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class CemaExceptionHandler {
 
-    @ExceptionHandler(EstablishmentAlreadyExistsException.class)
-    public final ResponseEntity<Object> handleEstablishmentAlreadyExistsException(EstablishmentAlreadyExistsException ex, WebRequest request) {
+    @ExceptionHandler(AlreadyExistsException.class)
+    public final ResponseEntity<Object> handleEstablishmentAlreadyExistsException(AlreadyExistsException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
         return new ResponseEntity(error, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(EstablishmentNotFoundException.class)
-    public final ResponseEntity<Object> handleEstablishmentNotFoundException(EstablishmentNotFoundException ex, WebRequest request) {
+    @ExceptionHandler(NotFoundException.class)
+    public final ResponseEntity<Object> handleEstablishmentNotFoundException(NotFoundException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
         return new ResponseEntity(error, HttpStatus.NOT_FOUND);
@@ -55,5 +56,11 @@ public class CemaExceptionHandler {
                     new ErrorResponse.Violation(fieldError.getField(), fieldError.getDefaultMessage()));
         }
         return new ResponseEntity(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public final ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(ex.getMessage(), request.toString());
+        return new ResponseEntity(error, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 }

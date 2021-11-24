@@ -1,8 +1,8 @@
 package com.cema.administration.controllers.handlers;
 
 import com.cema.administration.domain.ErrorResponse;
-import com.cema.administration.exceptions.EstablishmentAlreadyExistsException;
-import com.cema.administration.exceptions.EstablishmentNotFoundException;
+import com.cema.administration.exceptions.AlreadyExistsException;
+import com.cema.administration.exceptions.NotFoundException;
 import com.cema.administration.exceptions.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class CemaExceptionHandlerTest {
     public void handleEstablishmentAlreadyExistsExceptionShouldReturnResponseEntityWithMessageAndStatusCode() {
         CemaExceptionHandler cemaExceptionHandler = new CemaExceptionHandler();
 
-        EstablishmentAlreadyExistsException ex = new EstablishmentAlreadyExistsException("Establishment 123 already exists");
+        AlreadyExistsException ex = new AlreadyExistsException("Establishment 123 already exists");
 
         ResponseEntity<Object> result = cemaExceptionHandler.handleEstablishmentAlreadyExistsException(ex, webRequest);
         ErrorResponse body = (ErrorResponse) result.getBody();
@@ -53,7 +53,7 @@ class CemaExceptionHandlerTest {
     public void handleEstablishmentNotFoundExceptionShouldReturnResponseEntityWithMessageAndStatusCode(){
         CemaExceptionHandler cemaExceptionHandler = new CemaExceptionHandler();
 
-        EstablishmentNotFoundException ex = new EstablishmentNotFoundException("Establishment 123 Not Found");
+        NotFoundException ex = new NotFoundException("Establishment 123 Not Found");
 
         ResponseEntity<Object> result = cemaExceptionHandler.handleEstablishmentNotFoundException(ex, webRequest);
         ErrorResponse body = (ErrorResponse) result.getBody();

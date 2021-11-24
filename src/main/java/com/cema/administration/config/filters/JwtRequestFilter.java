@@ -49,7 +49,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             if (user != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(user.getRole());
                 CemaUserDetails userDetails = new CemaUserDetails(user.getUserName(), "null",
-                        Arrays.asList(grantedAuthority), user.getEstablishmentCuig());
+                        Arrays.asList(grantedAuthority), user.getEstablishmentCuig(), requestTokenHeader);
 
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
