@@ -93,7 +93,7 @@ public class AuditResponseBodyAdviceAdapter implements ResponseBodyAdvice<Object
             cemaAudit.setMethod(String.valueOf(returnType.getMethod()));
             cemaAudit.setRole(String.valueOf(authentication.getAuthorities()));
             cemaAudit.setAuditDate(new Date());
-            cemaAudit.setMethod("administration");
+            cemaAudit.setModule("administration");
 
             CemaUserDetails cemaUserDetails = (CemaUserDetails) authentication.getPrincipal();
             cemaAudit.setRequestorUsername(cemaUserDetails.getUsername());
