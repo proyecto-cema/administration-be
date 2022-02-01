@@ -31,7 +31,7 @@ import java.util.Date;
 public class AuditResponseBodyAdviceAdapter implements ResponseBodyAdvice<Object> {
 
     private final AuditRepository auditRepository;
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public AuditResponseBodyAdviceAdapter(AuditRepository auditRepository) {
         this.auditRepository = auditRepository;

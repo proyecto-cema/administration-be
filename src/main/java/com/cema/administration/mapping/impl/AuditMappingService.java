@@ -2,11 +2,11 @@ package com.cema.administration.mapping.impl;
 
 import com.cema.administration.domain.audit.Audit;
 import com.cema.administration.entities.CemaAudit;
-import com.cema.administration.mapping.AuditMapping;
+import com.cema.administration.mapping.RegularMappingService;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuditMappingImpl implements AuditMapping {
+public class AuditMappingService implements RegularMappingService<CemaAudit, Audit> {
 
     @Override
     public Audit mapEntityToDomain(CemaAudit cemaAudit) {

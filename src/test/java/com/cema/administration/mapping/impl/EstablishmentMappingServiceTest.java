@@ -3,16 +3,30 @@ package com.cema.administration.mapping.impl;
 
 import com.cema.administration.domain.Establishment;
 import com.cema.administration.entities.CemaEstablishment;
+import com.cema.administration.entities.CemaSubscription;
+import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-class EstablishmentMappingImplTest {
+class EstablishmentMappingServiceTest {
 
-    private final EstablishmentMappingImpl establishmentMapping = new EstablishmentMappingImpl();
+    @Mock
+    private SubscriptionMappingService subscriptionMappingService;
+
+    private EstablishmentMappingService establishmentMapping;
+
+    @BeforeEach
+    public void setUp(){
+        establishmentMapping = new EstablishmentMappingService(subscriptionMappingService);
+    }
 
     @Test
     public void mapEntityToDomainShouldReturnCorrectDomainObject() {
@@ -30,6 +44,9 @@ class EstablishmentMappingImplTest {
                 .ownerUserName(owner)
                 .location(location)
                 .build();
+        Date date = new Date();
+        List<CemaSubscription> cemaSubscriptionList = new ArrayList<>();
+        cemaEstablishment.setSubscriptions(cemaSubscriptionList);
 
         Establishment result = establishmentMapping.mapEntityToDomain(cemaEstablishment);
 
@@ -86,7 +103,7 @@ class EstablishmentMappingImplTest {
 
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
 
-        CemaEstablishment result= establishmentMapping.updateDomainWithEntity(establishment, cemaEstablishment);
+        CemaEstablishment result = establishmentMapping.updateDomainWithEntity(establishment, cemaEstablishment);
 
         assertThat(result.getName(), is(name));
         assertThat(result.getPhone(), is(phone));

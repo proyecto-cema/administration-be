@@ -41,7 +41,7 @@ public class ActivityClientServiceImpl implements ActivityClientService {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity entity = new HttpEntity("{}",httpHeaders);
+        HttpEntity entity = new HttpEntity("{}", httpHeaders);
         ResponseEntity<List<Ultrasound>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Ultrasound>>() {
         });
         return responseEntity.getBody();
@@ -54,7 +54,7 @@ public class ActivityClientServiceImpl implements ActivityClientService {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity entity = new HttpEntity("{}",httpHeaders);
+        HttpEntity entity = new HttpEntity("{}", httpHeaders);
         ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
         });
         return responseEntity.getBody();
