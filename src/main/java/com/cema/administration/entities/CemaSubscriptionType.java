@@ -68,7 +68,7 @@ public class CemaSubscriptionType {
             LocalDateTime expirationTime = expirationDate.toInstant()
                     .atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
-            return expirationTime.isAfter(LocalDateTime.now());
+            return expirationTime.isBefore(LocalDateTime.now()) || expirationTime.equals(LocalDateTime.now());
         }
         return false;
     }
