@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -94,7 +96,7 @@ public class AuditController {
             @RequestParam(value = "size", required = false, defaultValue = "10") int size) {
 
         String cuig = authorizationService.getCurrentUserCuig();
-        Pageable paging = PageRequest.of(page, size);
+        Pageable paging = PageRequest.of(page, size, Sort.by("auditDate").descending());
 
         Page<CemaAudit> cemaAuditPage;
         if (authorizationService.isAdmin()) {
@@ -109,7 +111,9 @@ public class AuditController {
         responseHeaders.set("total-pages", String.valueOf(cemaAuditPage.getTotalPages()));
         responseHeaders.set("current-page", String.valueOf(cemaAuditPage.getNumber()));
 
-        List<Audit> audits = cemaAudits.stream().map(auditMappingService::mapEntityToDomain).collect(Collectors.toList());
+        List<Audit> audits = cemaAudits.stream()
+                .map(auditMappingService::mapEntityToDomain)
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok().headers(responseHeaders).body(audits);
     }
