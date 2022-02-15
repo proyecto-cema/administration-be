@@ -45,7 +45,7 @@ public class Bovine {
     @ApiModelProperty(notes = "The batches this bovine belongs to", example = "[\"batch_1\",\"OtherBatch\",\"bigbatch\",\"Some_Batch\"]")
     private List<String> batchNames;
 
-    public Integer getTaggingYear(){
+    public Integer getTaggingYear() {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(taggingDate);
         return calendar.get(Calendar.YEAR);

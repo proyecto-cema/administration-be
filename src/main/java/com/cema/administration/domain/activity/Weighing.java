@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(callSuper=true)
+@ToString(callSuper = true)
 public class Weighing extends Activity {
 
     @ApiModelProperty(notes = "The weight measures in kilograms", example = "5000")

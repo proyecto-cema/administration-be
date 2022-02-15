@@ -1,18 +1,39 @@
 package com.cema.administration.mapping.impl;
 
 import com.cema.administration.domain.Establishment;
+import com.cema.administration.domain.Subscription;
 import com.cema.administration.entities.CemaEstablishment;
-import com.cema.administration.mapping.EstablishmentMapping;
+import com.cema.administration.entities.CemaSubscription;
+import com.cema.administration.mapping.UpdateMappingService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Service
-public class EstablishmentMappingImpl implements EstablishmentMapping {
+public class EstablishmentMappingService implements UpdateMappingService<CemaEstablishment, Establishment> {
+
+    private final SubscriptionMappingService subscriptionMappingService;
+
+    public EstablishmentMappingService(SubscriptionMappingService subscriptionMappingService) {
+        this.subscriptionMappingService = subscriptionMappingService;
+    }
 
     @Override
     public Establishment mapEntityToDomain(CemaEstablishment cemaEstablishment) {
+        List<CemaSubscription> cemaSubscriptions = cemaEstablishment.getSubscriptions();
+
+        Optional<CemaSubscription> cemaSubscriptionOptional = cemaSubscriptions.stream().max(Comparator.comparing(CemaSubscription::getStartingDate));
+
+        Subscription subscription = null;
+        if (cemaSubscriptionOptional.isPresent()) {
+            CemaSubscription cemaSubscription = cemaSubscriptionOptional.get();
+            subscription = subscriptionMappingService.mapEntityToDomain(cemaSubscription);
+        }
+
         return Establishment.builder()
                 .name(cemaEstablishment.getName())
                 .cuig(cemaEstablishment.getCuig())
@@ -20,6 +41,7 @@ public class EstablishmentMappingImpl implements EstablishmentMapping {
                 .location(cemaEstablishment.getLocation())
                 .phone(cemaEstablishment.getPhone())
                 .ownerUserName(cemaEstablishment.getOwnerUserName())
+                .activeSubscription(subscription)
                 .build();
     }
 

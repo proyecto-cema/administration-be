@@ -4,7 +4,7 @@ import com.cema.administration.constants.Messages;
 import com.cema.administration.domain.audit.Audit;
 import com.cema.administration.entities.CemaAudit;
 import com.cema.administration.exceptions.UnauthorizedException;
-import com.cema.administration.mapping.AuditMapping;
+import com.cema.administration.mapping.RegularMappingService;
 import com.cema.administration.repositories.AuditRepository;
 import com.cema.administration.services.authorization.AuthorizationService;
 import io.swagger.annotations.Api;
@@ -17,8 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,12 +43,12 @@ public class AuditController {
     private static final String BASE_URL = "/audit/";
 
     private final AuditRepository auditRepository;
-    private final AuditMapping auditMapping;
+    private final RegularMappingService<CemaAudit, Audit> auditMappingService;
     private final AuthorizationService authorizationService;
 
-    public AuditController(AuditRepository auditRepository, AuditMapping auditMapping, AuthorizationService authorizationService) {
+    public AuditController(AuditRepository auditRepository, RegularMappingService<CemaAudit, Audit> auditMappingService, AuthorizationService authorizationService) {
         this.auditRepository = auditRepository;
-        this.auditMapping = auditMapping;
+        this.auditMappingService = auditMappingService;
         this.authorizationService = authorizationService;
     }
 
@@ -68,7 +69,7 @@ public class AuditController {
             throw new UnauthorizedException(String.format(Messages.OUTSIDE_ESTABLISHMENT, cuig));
         }
 
-        CemaAudit newAudit = auditMapping.mapDomainToEntity(audit);
+        CemaAudit newAudit = auditMappingService.mapDomainToEntity(audit);
 
         auditRepository.save(newAudit);
 
@@ -95,7 +96,7 @@ public class AuditController {
             @RequestParam(value = "size", required = false, defaultValue = "10") int size) {
 
         String cuig = authorizationService.getCurrentUserCuig();
-        Pageable paging = PageRequest.of(page, size);
+        Pageable paging = PageRequest.of(page, size, Sort.by("auditDate").descending());
 
         Page<CemaAudit> cemaAuditPage;
         if (authorizationService.isAdmin()) {
@@ -110,7 +111,9 @@ public class AuditController {
         responseHeaders.set("total-pages", String.valueOf(cemaAuditPage.getTotalPages()));
         responseHeaders.set("current-page", String.valueOf(cemaAuditPage.getNumber()));
 
-        List<Audit> audits = cemaAudits.stream().map(auditMapping::mapEntityToDomain).collect(Collectors.toList());
+        List<Audit> audits = cemaAudits.stream()
+                .map(auditMappingService::mapEntityToDomain)
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok().headers(responseHeaders).body(audits);
     }

@@ -20,7 +20,7 @@ public class Live implements Reported<Live> {
     @ApiModelProperty(notes = "The category of the animals", example = "Vaca")
     private String category;
 
-    public void addOne(){
+    public void addOne() {
         count++;
     }
 

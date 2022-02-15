@@ -23,4 +23,6 @@ public class Establishment {
     private String email;
     @ApiModelProperty(notes = "The the username of the owner of this establishment", example = "merlinds")
     private String ownerUserName;
+    @ApiModelProperty(notes = "The subscription this establishment is associated to last")
+    private Subscription activeSubscription;
 }

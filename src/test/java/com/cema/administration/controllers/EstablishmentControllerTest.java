@@ -5,8 +5,12 @@ import com.cema.administration.domain.Establishment;
 import com.cema.administration.entities.CemaEstablishment;
 import com.cema.administration.exceptions.AlreadyExistsException;
 import com.cema.administration.exceptions.NotFoundException;
-import com.cema.administration.mapping.EstablishmentMapping;
+import com.cema.administration.mapping.UpdateMappingService;
+import com.cema.administration.mapping.impl.SubscriptionMappingService;
+import com.cema.administration.mapping.impl.SubscriptionTypeMappingService;
 import com.cema.administration.repositories.EstablishmentRepository;
+import com.cema.administration.repositories.SubscriptionRepository;
+import com.cema.administration.repositories.SubscriptionTypeRepository;
 import com.cema.administration.services.authorization.AuthorizationService;
 import com.cema.administration.services.validation.EstablishmentValidationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +31,19 @@ public class EstablishmentControllerTest {
     @Mock
     private EstablishmentRepository establishmentRepository;
     @Mock
-    private EstablishmentMapping establishmentMapping;
+    private UpdateMappingService mappingService;
     @Mock
     private AuthorizationService authorizationService;
     @Mock
     private EstablishmentValidationService establishmentValidationService;
+    @Mock
+    private SubscriptionMappingService subscriptionMappingService;
+    @Mock
+    private SubscriptionTypeRepository subscriptionTypeRepository;
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+
     private EstablishmentController establishmentController;
 
     @BeforeEach
@@ -39,8 +51,8 @@ public class EstablishmentControllerTest {
         openMocks(this);
         when(authorizationService.isOnTheSameEstablishment(cuig)).thenReturn(true);
         when(authorizationService.getCurrentUserCuig()).thenReturn(cuig);
-        establishmentController = new EstablishmentController(establishmentRepository, establishmentMapping,
-                authorizationService, establishmentValidationService);
+        establishmentController = new EstablishmentController(establishmentRepository, mappingService,
+                authorizationService, establishmentValidationService, subscriptionMappingService, subscriptionTypeRepository, subscriptionRepository);
     }
 
     @Test
@@ -49,7 +61,7 @@ public class EstablishmentControllerTest {
         Establishment establishment = Establishment.builder().build();
 
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
-        when(establishmentMapping.mapEntityToDomain(cemaEstablishment)).thenReturn(establishment);
+        when(mappingService.mapEntityToDomain(cemaEstablishment)).thenReturn(establishment);
 
         ResponseEntity<Establishment> result = establishmentController.lookUpEstablishmentByCuig(cuig);
         Establishment resultingUser = result.getBody();
@@ -66,7 +78,7 @@ public class EstablishmentControllerTest {
         Establishment establishment = Establishment.builder().build();
 
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(null);
-        when(establishmentMapping.mapEntityToDomain(cemaEstablishment)).thenReturn(establishment);
+        when(mappingService.mapEntityToDomain(cemaEstablishment)).thenReturn(establishment);
 
         Exception exception = assertThrows(NotFoundException.class, () -> {
             establishmentController.lookUpEstablishmentByCuig(cuig);
@@ -81,7 +93,7 @@ public class EstablishmentControllerTest {
         CemaEstablishment cemaEstablishment = new CemaEstablishment();
         Establishment establishment = Establishment.builder().build();
 
-        when(establishmentMapping.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
+        when(mappingService.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
 
         ResponseEntity<String> result = establishmentController.registerEstablishment(establishment);
 
@@ -99,7 +111,7 @@ public class EstablishmentControllerTest {
         establishment.setCuig(cuig);
 
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
-        when(establishmentMapping.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
+        when(mappingService.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
 
         Exception exception = assertThrows(AlreadyExistsException.class, () -> {
             establishmentController.registerEstablishment(establishment);
@@ -119,7 +131,7 @@ public class EstablishmentControllerTest {
                 .build();
 
         when(establishmentRepository.findCemaEstablishmentByCuig(cuig)).thenReturn(cemaEstablishment);
-        when(establishmentMapping.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
+        when(mappingService.mapDomainToEntity(establishment)).thenReturn(cemaEstablishment);
 
         ResponseEntity<Establishment> result = establishmentController.updateEstablishment(cuig, establishment);
 

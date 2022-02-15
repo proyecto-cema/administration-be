@@ -16,9 +16,9 @@ public class ApiServer {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         // Setting Spring Boot SetTimeZone
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Buenos_Aires"));
     }
 
 }
