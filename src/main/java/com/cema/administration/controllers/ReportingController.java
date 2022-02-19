@@ -1,9 +1,16 @@
 package com.cema.administration.controllers;
 
+import com.cema.administration.constants.OperationType;
+import com.cema.administration.domain.Subscription;
+import com.cema.administration.domain.activity.Feeding;
 import com.cema.administration.domain.activity.Ultrasound;
 import com.cema.administration.domain.activity.Weighing;
+import com.cema.administration.domain.bovine.Batch;
 import com.cema.administration.domain.bovine.Bovine;
-import com.cema.administration.domain.report.Batch;
+import com.cema.administration.domain.economic.BovineOperation;
+import com.cema.administration.domain.economic.Supply;
+import com.cema.administration.domain.economic.SupplyOperation;
+import com.cema.administration.domain.health.Illness;
 import com.cema.administration.domain.report.Disease;
 import com.cema.administration.domain.report.FoodConsumption;
 import com.cema.administration.domain.report.Income;
@@ -14,6 +21,8 @@ import com.cema.administration.domain.report.Weight;
 import com.cema.administration.domain.report.YearlyReport;
 import com.cema.administration.services.client.activity.impl.ActivityClientServiceImpl;
 import com.cema.administration.services.client.bovine.BovineClientService;
+import com.cema.administration.services.client.economic.EconomicClientService;
+import com.cema.administration.services.client.health.HealthClientService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -32,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,14 +60,19 @@ public class ReportingController {
 
     private final ActivityClientServiceImpl activityClientService;
     private final BovineClientService bovineClientService;
+    private final HealthClientService healthClientService;
+    private final EconomicClientService economicClientService;
 
-    public ReportingController(BovineClientService bovineClientService, ActivityClientServiceImpl activityClientService) {
-        this.bovineClientService = bovineClientService;
+    public ReportingController(ActivityClientServiceImpl activityClientService, BovineClientService bovineClientService,
+                               HealthClientService healthClientService, EconomicClientService economicClientService) {
         this.activityClientService = activityClientService;
+        this.bovineClientService = bovineClientService;
+        this.healthClientService = healthClientService;
+        this.economicClientService = economicClientService;
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the pregnancy level over the years and for the current year")
+    @ApiOperation(value = "Get a report of the pregnancy level over the years and for the current year", response = Pregnancy.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -116,7 +131,7 @@ public class ReportingController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the disease level over the years and for the current year")
+    @ApiOperation(value = "Get a report of the disease level over the years and for the current year", response = Disease.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -134,36 +149,33 @@ public class ReportingController {
 
         LOG.info("Request to create disease report");
 
-        YearlyReport disease = YearlyReport.builder()
+        List<Illness> illnesses = healthClientService.getAllBovineIllness();
+        Map<String, Disease> reports = new HashMap<>();
+
+        for (Illness illness : illnesses) {
+            String diseaseName = illness.getDiseaseName();
+            int year = illness.getStartingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().getYear();
+            String key = diseaseName + year;
+
+            Disease disease = reports.containsKey(key) ? reports.get(key) : new Disease(year, 0, diseaseName);
+            disease.addOne();
+            reports.put(key, disease);
+        }
+
+        YearlyReport diseaseReport = YearlyReport.builder()
                 .type("disease")
                 .description("Cantidad de infecciones anuales por tipo")
-                .reported(new Disease(2016, 123, "Aftosa"))
-                .reported(new Disease(2017, 200, "Aftosa"))
-                .reported(new Disease(2018, 250, "Aftosa"))
-                .reported(new Disease(2019, 101, "Aftosa"))
-                .reported(new Disease(2020, 115, "Aftosa"))
-                .reported(new Disease(2021, 150, "Aftosa"))
-                .reported(new Disease(2016, 40, "Leptospirosis"))
-                .reported(new Disease(2017, 20, "Leptospirosis"))
-                .reported(new Disease(2018, 5, "Leptospirosis"))
-                .reported(new Disease(2019, 50, "Leptospirosis"))
-                .reported(new Disease(2020, 55, "Leptospirosis"))
-                .reported(new Disease(2021, 10, "Leptospirosis"))
-                .reported(new Disease(2016, 13, "Brucelosis"))
-                .reported(new Disease(2017, 3, "Brucelosis"))
-                .reported(new Disease(2018, 15, "Brucelosis"))
-                .reported(new Disease(2019, 2, "Brucelosis"))
-                .reported(new Disease(2020, 0, "Brucelosis"))
-                .reported(new Disease(2021, 3, "Brucelosis"))
                 .build();
 
-        disease.filterByYear(yearFrom, yearTo);
+        diseaseReport.setReportedList(new ArrayList<>(reports.values()));
 
-        return new ResponseEntity<>(disease, HttpStatus.OK);
+        diseaseReport.filterByYear(yearFrom, yearTo);
+
+        return new ResponseEntity<>(diseaseReport, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the weight level over the years and for the current year")
+    @ApiOperation(value = "Get a report of the weight level over the years and for the current year", response = Weight.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -224,7 +236,7 @@ public class ReportingController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the weight level over the years and for the current year by batch")
+    @ApiOperation(value = "Get a report of the weight level over the years and for the current year by batch", response = Weight.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -242,28 +254,46 @@ public class ReportingController {
 
         LOG.info("Request to create batch report");
 
-        YearlyReport batch = YearlyReport.builder()
-                .type("batch")
-                .description("Peso promedio anual por batch")
-                .reported(new Batch(2016, 712, "las_vacas_negras"))
-                .reported(new Batch(2017, 715, "las_vacas_negras"))
-                .reported(new Batch(2018, 760, "las_vacas_negras"))
-                .reported(new Batch(2019, 750, "las_vacas_negras"))
-                .reported(new Batch(2020, 700, "las_vacas_negras"))
-                .reported(new Batch(2021, 712, "las_vacas_negras"))
-                .reported(new Batch(2016, 711, "batch_2"))
-                .reported(new Batch(2017, 712, "batch_2"))
-                .reported(new Batch(2018, 730, "batch_2"))
-                .reported(new Batch(2019, 750, "batch_2"))
-                .reported(new Batch(2020, 722, "batch_2"))
-                .reported(new Batch(2021, 723, "batch_2"))
-                .reported(new Batch(2016, 1100, "toros"))
-                .reported(new Batch(2017, 1115, "toros"))
-                .reported(new Batch(2018, 1200, "toros"))
-                .reported(new Batch(2019, 1221, "toros"))
-                .reported(new Batch(2020, 1150, "toros"))
-                .reported(new Batch(2021, 1200, "toros"))
-                .build();
+        List<Batch> batches = bovineClientService.getAllBatches();
+
+        Map<String, Weight> totalWeights = new HashMap<>();
+        Map<String, Integer> totals = new HashMap<>();
+
+        for (Batch batch : batches) {
+            List<String> bovineTags = batch.getBovineTags();
+            String batchName = batch.getBatchName();
+
+            List<Bovine> bovines = bovineClientService.getAllBovinesFromList(bovineTags);
+            for (Bovine bovine : bovines) {
+                List<Weighing> weightings = activityClientService.getLastWeightingsForBovine(bovine.getTag());
+
+                for (Weighing weighing : weightings) {
+                    int year = weighing.getExecutionYear();
+                    long weight = weighing.getWeight();
+
+                    String key = batchName + year;
+
+                    int totalCount = totals.getOrDefault(key, 0);
+                    Weight totalWeight = totalWeights.getOrDefault(key, new Weight(year, 0L, batchName));
+                    totalCount++;
+                    totals.put(key, totalCount);
+                    totalWeight.setWeight(totalWeight.getWeight() + weight);
+                    totalWeights.put(key, totalWeight);
+                }
+            }
+        }
+
+        YearlyReport batch = new YearlyReport();
+        batch.setType("batch");
+        batch.setDescription("Peso promedio anual por batch");
+        batch.setReportedList(new ArrayList<>());
+
+        for (String key : totalWeights.keySet()) {
+            Weight weight = totalWeights.get(key);
+            Integer total = totals.get(key);
+            weight.setWeight(weight.getWeight() / total);
+            batch.getReportedList().add(weight);
+        }
 
         batch.filterByYear(yearFrom, yearTo);
 
@@ -271,7 +301,7 @@ public class ReportingController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the food consumed by bovines each year separated by category")
+    @ApiOperation(value = "Get a report of the food consumed by bovines each year separated by category", response = FoodConsumption.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -289,28 +319,31 @@ public class ReportingController {
 
         LOG.info("Request to create batch report");
 
+        List<Feeding> feedings = activityClientService.getAllFeedings();
+
+        Map<String, FoodConsumption> reports = new HashMap<>();
+
+        for (Feeding feeding : feedings) {
+            int year = feeding.getExecutionYear();
+            long foodEaten = feeding.getAmount();
+            String tag = feeding.getBovineTag();
+
+            Bovine bovine = bovineClientService.getBovine(tag);
+            String category = bovine.getCategory();
+            String key = category + year;
+
+            FoodConsumption foodConsumption = reports.containsKey(key) ? reports.get(key)
+                    : new FoodConsumption(year, 0L, category);
+            foodConsumption.setFoodEaten(foodConsumption.getFoodEaten() + foodEaten);
+            reports.put(key, foodConsumption);
+        }
+
         YearlyReport foodConsumption = YearlyReport.builder()
                 .type("foodConsumption")
                 .description("Alimento consumido anualmente por categoria")
-                .reported(new FoodConsumption(2016, 2500, "Ternero"))
-                .reported(new FoodConsumption(2017, 2250, "Ternero"))
-                .reported(new FoodConsumption(2018, 2100, "Ternero"))
-                .reported(new FoodConsumption(2019, 2500, "Ternero"))
-                .reported(new FoodConsumption(2020, 2200, "Ternero"))
-                .reported(new FoodConsumption(2021, 2000, "Ternero"))
-                .reported(new FoodConsumption(2016, 7500, "Vaca"))
-                .reported(new FoodConsumption(2017, 7250, "Vaca"))
-                .reported(new FoodConsumption(2018, 7500, "Vaca"))
-                .reported(new FoodConsumption(2019, 7100, "Vaca"))
-                .reported(new FoodConsumption(2020, 7000, "Vaca"))
-                .reported(new FoodConsumption(2021, 7100, "Vaca"))
-                .reported(new FoodConsumption(2016, 8500, "Toro"))
-                .reported(new FoodConsumption(2017, 8500, "Toro"))
-                .reported(new FoodConsumption(2018, 8000, "Toro"))
-                .reported(new FoodConsumption(2019, 8250, "Toro"))
-                .reported(new FoodConsumption(2020, 8100, "Toro"))
-                .reported(new FoodConsumption(2021, 8100, "Toro"))
                 .build();
+
+        foodConsumption.setReportedList(new ArrayList<>(reports.values()));
 
         foodConsumption.filterByYear(yearFrom, yearTo);
 
@@ -318,7 +351,7 @@ public class ReportingController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the cost by live kilogram")
+    @ApiOperation(value = "Get a report of the cost by live kilogram", response = LiveCost.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -336,16 +369,43 @@ public class ReportingController {
 
         LOG.info("Request to create batch report");
 
-        YearlyReport liveCost = YearlyReport.builder()
-                .type("liveCost")
-                .description("Rendimiento anual de la comida por kilogramo vivo")
-                .reported(new LiveCost(2016, 372000, 1000021.5, 2.6))
-                .reported(new LiveCost(2017, 315000, 800021.5, 2.5))
-                .reported(new LiveCost(2018, 333000, 790021.5, 2.37))
-                .reported(new LiveCost(2019, 382020, 1050021.5, 2.74))
-                .reported(new LiveCost(2020, 312000, 700021.5, 2.2))
-                .reported(new LiveCost(2021, 333000, 1000500.5, 3.0))
-                .build();
+        List<Weighing> weighingList = activityClientService.getAllWeightings();
+        List<Feeding> feedingList = activityClientService.getAllFeedings();
+
+        Map<String, Long> weightByYear = new HashMap<>();
+        Map<String, Long> spendingByYear = new HashMap<>();
+
+        for (Weighing weighing : weighingList) {
+            String yearKey = String.valueOf(weighing.getExecutionYear());
+
+            long weight = weightByYear.getOrDefault(yearKey, 0L);
+            weight += weighing.getWeight();
+            weightByYear.put(yearKey, weight);
+        }
+
+        for (Feeding feeding : feedingList) {
+            String yearKey = String.valueOf(feeding.getExecutionYear());
+            String foodName = feeding.getFood();
+            long foodAmount = feeding.getAmount();
+            Supply supply = economicClientService.getSupply(foodName);
+            long price = supply.getPrice();
+
+            long spending = spendingByYear.getOrDefault(yearKey, 0L);
+            spending += foodAmount * price;
+            spendingByYear.put(yearKey, spending);
+        }
+
+        YearlyReport liveCost = new YearlyReport();
+        liveCost.setType("liveCost");
+        liveCost.setDescription("Rendimiento anual de la comida por kilogramo vivo");
+        liveCost.setReportedList(new ArrayList<>());
+
+        for (String key : weightByYear.keySet()) {
+            long weight = weightByYear.get(key);
+            long spending = spendingByYear.get(key);
+            LiveCost report = new LiveCost(Integer.valueOf(key), weight, spending, ((double) spending / weight));
+            liveCost.getReportedList().add(report);
+        }
 
         liveCost.filterByYear(yearFrom, yearTo);
 
@@ -353,7 +413,7 @@ public class ReportingController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the live animals for each year")
+    @ApiOperation(value = "Get a report of the live animals for each year", response = Live.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -399,7 +459,7 @@ public class ReportingController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Get a report of the income versus spending by year")
+    @ApiOperation(value = "Get a report of the income versus spending by year", response = Income.class, responseContainer = "List")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Report returned."),
             @ApiResponse(code = 401, message = "You are not allowed to get this report")
@@ -417,16 +477,55 @@ public class ReportingController {
 
         LOG.info("Request to create income report");
 
-        YearlyReport income = YearlyReport.builder()
-                .type("income")
-                .description("Porcentaje de vacas preñadas por año")
-                .reported(new Income(2016, 1050021.5, 1000021.5))
-                .reported(new Income(2017, 790021.5, 800021.5))
-                .reported(new Income(2018, 820021.5, 790021.5))
-                .reported(new Income(2019, 1550021.5, 1050021.5))
-                .reported(new Income(2020, 710021.5, 700021.5))
-                .reported(new Income(2021, 1030500.5, 1000500.5))
-                .build();
+        List<SupplyOperation> supplyOperations = economicClientService.getAllSupplyOperations();
+        List<BovineOperation> bovineOperations = economicClientService.getAllBovineOperations();
+
+        Map<String, Long> spendingByYear = new HashMap<>();
+        Map<String, Long> incomeByYear = new HashMap<>();
+
+        for (SupplyOperation supplyOperation : supplyOperations) {
+            String yearKey = String.valueOf(supplyOperation.getTransactionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().getYear());
+            String supplyName = supplyOperation.getSupplyName();
+            Supply supply = economicClientService.getSupply(supplyName);
+
+            String type = supplyOperation.getOperationType();
+            long amount = supplyOperation.getAmount();
+            long price = supply.getPrice();
+            long cost = amount * price;
+            if (OperationType.BUY.equalsIgnoreCase(type)) {
+                long totalByYear = spendingByYear.getOrDefault(yearKey, 0L);
+                totalByYear += cost;
+                spendingByYear.put(yearKey, totalByYear);
+            }
+        }
+
+        for (BovineOperation bovineOperation : bovineOperations) {
+            long amount = bovineOperation.getAmount();
+            String type = bovineOperation.getOperationType();
+            String yearKey = String.valueOf(bovineOperation.getTransactionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().getYear());
+
+            if (OperationType.BUY.equalsIgnoreCase(type)) {
+                long totalByYear = spendingByYear.getOrDefault(yearKey, 0L);
+                totalByYear += amount;
+                spendingByYear.put(yearKey, totalByYear);
+            } else if (OperationType.SELL.equalsIgnoreCase(type)) {
+                long totalByYear = incomeByYear.getOrDefault(yearKey, 0L);
+                totalByYear += amount;
+                incomeByYear.put(yearKey, totalByYear);
+            }
+        }
+
+        YearlyReport income = new YearlyReport();
+        income.setType("income");
+        income.setDescription("Gastos versus ingresos por año");
+        income.setReportedList(new ArrayList<>());
+
+        for (String key : incomeByYear.keySet()) {
+            long incomeAmount = incomeByYear.get(key);
+            long spendingAmount = spendingByYear.get(key);
+            Income incomeReport = new Income(Integer.valueOf(key), incomeAmount, spendingAmount);
+            income.getReportedList().add(incomeReport);
+        }
 
         income.filterByYear(yearFrom, yearTo);
 

@@ -156,7 +156,7 @@ public class EstablishmentController {
         return new ResponseEntity<>(establishment, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Validate establishment from cuig sent data", response = Establishment.class)
+    @ApiOperation(value = "Validate establishment from cuig sent data")
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Establishment is valid"),
             @ApiResponse(code = 404, message = "Establishment not found"),
@@ -216,7 +216,7 @@ public class EstablishmentController {
     }
 
     @PreAuthorize("hasRole('PATRON')")
-    @ApiOperation(value = "Retrieve subscriptions for an establishment from cuig", response = SubscriptionType.class)
+    @ApiOperation(value = "Retrieve subscriptions for an establishment from cuig", response = Subscription.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully found subscriptions"),
             @ApiResponse(code = 404, message = "Subscriptions not found"),

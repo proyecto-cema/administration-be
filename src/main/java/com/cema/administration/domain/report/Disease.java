@@ -20,6 +20,10 @@ public class Disease implements Reported<Disease> {
     @ApiModelProperty(notes = "The name of the disease", example = "Aftosa")
     private String name;
 
+    public void addOne() {
+        infections++;
+    }
+
     @Override
     public int compareTo(@NotNull Disease o) {
         return this.year.compareTo(o.getYear()) != 0 ?

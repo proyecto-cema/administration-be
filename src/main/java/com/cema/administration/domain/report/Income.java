@@ -16,9 +16,9 @@ public class Income implements Reported<Income> {
     @ApiModelProperty(notes = "The year for this data", example = "2015")
     private Integer year;
     @ApiModelProperty(notes = "Ingresos para el periodo", example = "1500.5")
-    private Double earnings;
+    private Long earnings;
     @ApiModelProperty(notes = "Gastos para el periodo", example = "1123.5")
-    private Double spending;
+    private Long spending;
 
     @Override
     public int compareTo(@NotNull Income o) {

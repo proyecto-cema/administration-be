@@ -1,12 +1,13 @@
-package com.cema.administration.services.client.activity.impl;
+package com.cema.administration.services.client.economic.impl;
 
 import com.cema.administration.domain.ErrorResponse;
-import com.cema.administration.domain.activity.Feeding;
-import com.cema.administration.domain.activity.Ultrasound;
-import com.cema.administration.domain.activity.Weighing;
+import com.cema.administration.domain.bovine.Bovine;
+import com.cema.administration.domain.economic.BovineOperation;
+import com.cema.administration.domain.economic.Supply;
+import com.cema.administration.domain.economic.SupplyOperation;
 import com.cema.administration.exceptions.ValidationException;
 import com.cema.administration.services.authorization.AuthorizationService;
-import com.cema.administration.services.client.activity.ActivityClientService;
+import com.cema.administration.services.client.economic.EconomicClientService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,21 +24,18 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 
 @Service
-public class ActivityClientServiceImpl implements ActivityClientService {
-
+public class EconomicClientServiceImpl implements EconomicClientService {
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String PATH_ULTRASOUND = "ultrasounds/search?size=999";
-    private static final String PATH_WEIGHTINGS = "weightings/search?size=999";
-    private static final String PATH_FEEDINGS = "feedings/search?size=999";
-    private static final String PATH_WEIGHTINGS_LAST = "weightings/search?size=10";
+    private static final String PATH_GET_SUPPLY = "supply/{name}";
+    private static final String PATH_GET_ALL_SUPPLY_OPERATIONS = "/supply-operations/list";
+    private static final String PATH_GET_ALL_BOVINE_OPERATIONS = "/bovine-operations/list";
 
     private final RestTemplate restTemplate;
     private final String url;
     private final AuthorizationService authorizationService;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public ActivityClientServiceImpl(RestTemplate restTemplate, @Value("${back-end.activity.url}") String url,
-                                     AuthorizationService authorizationService) {
+    public EconomicClientServiceImpl(RestTemplate restTemplate, @Value("${back-end.economic.url}") String url, AuthorizationService authorizationService) {
         this.restTemplate = restTemplate;
         this.url = url;
         this.authorizationService = authorizationService;
@@ -45,17 +43,16 @@ public class ActivityClientServiceImpl implements ActivityClientService {
 
     @SneakyThrows
     @Override
-    public List<Ultrasound> getAllUltrasounds() {
+    public Supply getSupply(String food) {
         String authToken = authorizationService.getUserAuthToken();
-        String searchUrl = url + PATH_ULTRASOUND;
+        String searchUrl = url + PATH_GET_SUPPLY;
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity entity = new HttpEntity("{}", httpHeaders);
         try {
-        ResponseEntity<List<Ultrasound>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Ultrasound>>() {
-        });
-        return responseEntity.getBody();
+            ResponseEntity<Supply> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, Supply.class, food);
+            return responseEntity.getBody();
         } catch (RestClientResponseException httpClientErrorException) {
             String response = httpClientErrorException.getResponseBodyAsString();
             ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
@@ -65,17 +62,17 @@ public class ActivityClientServiceImpl implements ActivityClientService {
 
     @SneakyThrows
     @Override
-    public List<Weighing> getAllWeightings() {
+    public List<SupplyOperation> getAllSupplyOperations() {
         String authToken = authorizationService.getUserAuthToken();
-        String searchUrl = url + PATH_WEIGHTINGS;
+        String searchUrl = url + PATH_GET_ALL_SUPPLY_OPERATIONS;
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity entity = new HttpEntity("{}", httpHeaders);
         try {
-        ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
-        });
-        return responseEntity.getBody();
+            ResponseEntity<List<SupplyOperation>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<SupplyOperation>>() {});
+            return responseEntity.getBody();
         } catch (RestClientResponseException httpClientErrorException) {
             String response = httpClientErrorException.getResponseBodyAsString();
             ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
@@ -85,44 +82,21 @@ public class ActivityClientServiceImpl implements ActivityClientService {
 
     @SneakyThrows
     @Override
-    public List<Feeding> getAllFeedings() {
+    public List<BovineOperation> getAllBovineOperations() {
         String authToken = authorizationService.getUserAuthToken();
-        String searchUrl = url + PATH_FEEDINGS;
+        String searchUrl = url + PATH_GET_ALL_BOVINE_OPERATIONS;
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity entity = new HttpEntity("{}", httpHeaders);
         try {
-        ResponseEntity<List<Feeding>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Feeding>>() {
-        });
-        return responseEntity.getBody();
+            ResponseEntity<List<BovineOperation>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<BovineOperation>>() {});
+            return responseEntity.getBody();
         } catch (RestClientResponseException httpClientErrorException) {
             String response = httpClientErrorException.getResponseBodyAsString();
             ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
             throw new ValidationException(errorResponse.getMessage(), httpClientErrorException);
         }
-    }
-
-    @SneakyThrows
-    @Override
-    public List<Weighing> getLastWeightingsForBovine(String bovineTag) {
-        Weighing toSearch = Weighing.builder()
-                .bovineTag(bovineTag)
-                .build();
-        String authToken = authorizationService.getUserAuthToken();
-        String searchUrl = url + PATH_WEIGHTINGS_LAST;
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(AUTHORIZATION_HEADER, authToken);
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Weighing> entity = new HttpEntity<>(toSearch, httpHeaders);
-            try {
-        ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
-        });
-        return responseEntity.getBody();
-            } catch (RestClientResponseException httpClientErrorException) {
-                String response = httpClientErrorException.getResponseBodyAsString();
-                ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
-                throw new ValidationException(errorResponse.getMessage(), httpClientErrorException);
-            }
     }
 }

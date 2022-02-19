@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Batch implements Reported<Batch> {
+public class BatchReport implements Reported<BatchReport> {
 
     @ApiModelProperty(notes = "The year for this data", example = "2015")
     private Integer year;
@@ -22,7 +22,7 @@ public class Batch implements Reported<Batch> {
 
 
     @Override
-    public int compareTo(@NotNull Batch o) {
+    public int compareTo(@NotNull BatchReport o) {
         return this.year.compareTo(o.getYear()) != 0 ?
                 this.year.compareTo(o.getYear()) : this.getBatchName().compareTo(o.getBatchName());
     }
