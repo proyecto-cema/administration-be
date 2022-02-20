@@ -1,5 +1,6 @@
 package com.cema.administration.domain.activity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,6 +29,11 @@ public class Weighing extends Activity {
     @ApiModelProperty(notes = "The tag this activity is associated to.", example = "1234")
     @NotEmpty(message = "Bovine Tag is required")
     private String bovineTag;
+
+    @JsonIgnore
+    public Long getWeightSafely() {
+        return weight != null ? weight : 0L;
+    }
 
     @Builder
     public Weighing(UUID id, @NotEmpty(message = "Name is required") String name,

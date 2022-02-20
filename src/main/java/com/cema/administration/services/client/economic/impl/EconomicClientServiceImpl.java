@@ -27,8 +27,8 @@ import java.util.List;
 public class EconomicClientServiceImpl implements EconomicClientService {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String PATH_GET_SUPPLY = "supply/{name}";
-    private static final String PATH_GET_ALL_SUPPLY_OPERATIONS = "/supply-operations/list";
-    private static final String PATH_GET_ALL_BOVINE_OPERATIONS = "/bovine-operations/list";
+    private static final String PATH_GET_ALL_SUPPLY_OPERATIONS = "/supply-operations/list?size=999";
+    private static final String PATH_GET_ALL_BOVINE_OPERATIONS = "/bovine-operations/list?size=999";
 
     private final RestTemplate restTemplate;
     private final String url;

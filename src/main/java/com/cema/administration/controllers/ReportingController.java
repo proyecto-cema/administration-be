@@ -1,7 +1,6 @@
 package com.cema.administration.controllers;
 
 import com.cema.administration.constants.OperationType;
-import com.cema.administration.domain.Subscription;
 import com.cema.administration.domain.activity.Feeding;
 import com.cema.administration.domain.activity.Ultrasound;
 import com.cema.administration.domain.activity.Weighing;
@@ -45,6 +44,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -171,6 +171,8 @@ public class ReportingController {
 
         diseaseReport.filterByYear(yearFrom, yearTo);
 
+        diseaseReport.getReportedList().sort(null);
+
         return new ResponseEntity<>(diseaseReport, HttpStatus.OK);
     }
 
@@ -203,9 +205,9 @@ public class ReportingController {
         Map<String, Integer> totals = new HashMap<>();
 
         for (Weighing weighing : weightings) {
-            String category = weighing.getCategory();
+            String category = weighing.getCategory().toLowerCase(Locale.ROOT);
             Integer year = weighing.getExecutionYear();
-            Long weight = weighing.getWeight();
+            Long weight = weighing.getWeightSafely();
             String key = category + year;
 
             int totalCount = totals.getOrDefault(key, 0);
@@ -269,7 +271,7 @@ public class ReportingController {
 
                 for (Weighing weighing : weightings) {
                     int year = weighing.getExecutionYear();
-                    long weight = weighing.getWeight();
+                    long weight = weighing.getWeightSafely();
 
                     String key = batchName + year;
 
@@ -297,6 +299,8 @@ public class ReportingController {
 
         batch.filterByYear(yearFrom, yearTo);
 
+        batch.getReportedList().sort(null);
+
         return new ResponseEntity<>(batch, HttpStatus.OK);
     }
 
@@ -317,7 +321,7 @@ public class ReportingController {
                     example = "2021")
             @RequestParam(value = "yearTo", required = false, defaultValue = "-1") int yearTo) {
 
-        LOG.info("Request to create batch report");
+        LOG.info("Request to create feed report");
 
         List<Feeding> feedings = activityClientService.getAllFeedings();
 
@@ -325,17 +329,19 @@ public class ReportingController {
 
         for (Feeding feeding : feedings) {
             int year = feeding.getExecutionYear();
-            long foodEaten = feeding.getAmount();
+            long foodEaten = feeding.getAmountSafely();
             String tag = feeding.getBovineTag();
 
             Bovine bovine = bovineClientService.getBovine(tag);
-            String category = bovine.getCategory();
-            String key = category + year;
+            if(bovine != null) {
+                String category = bovine.getCategory();
+                String key = category + year;
 
-            FoodConsumption foodConsumption = reports.containsKey(key) ? reports.get(key)
-                    : new FoodConsumption(year, 0L, category);
-            foodConsumption.setFoodEaten(foodConsumption.getFoodEaten() + foodEaten);
-            reports.put(key, foodConsumption);
+                FoodConsumption foodConsumption = reports.containsKey(key) ? reports.get(key)
+                        : new FoodConsumption(year, 0L, category);
+                foodConsumption.setFoodEaten(foodConsumption.getFoodEaten() + foodEaten);
+                reports.put(key, foodConsumption);
+            }
         }
 
         YearlyReport foodConsumption = YearlyReport.builder()
@@ -346,6 +352,8 @@ public class ReportingController {
         foodConsumption.setReportedList(new ArrayList<>(reports.values()));
 
         foodConsumption.filterByYear(yearFrom, yearTo);
+
+        foodConsumption.getReportedList().sort(null);
 
         return new ResponseEntity<>(foodConsumption, HttpStatus.OK);
     }
@@ -379,14 +387,14 @@ public class ReportingController {
             String yearKey = String.valueOf(weighing.getExecutionYear());
 
             long weight = weightByYear.getOrDefault(yearKey, 0L);
-            weight += weighing.getWeight();
+            weight += weighing.getWeightSafely();
             weightByYear.put(yearKey, weight);
         }
 
         for (Feeding feeding : feedingList) {
             String yearKey = String.valueOf(feeding.getExecutionYear());
             String foodName = feeding.getFood();
-            long foodAmount = feeding.getAmount();
+            long foodAmount = feeding.getAmountSafely();
             Supply supply = economicClientService.getSupply(foodName);
             long price = supply.getPrice();
 
@@ -401,13 +409,16 @@ public class ReportingController {
         liveCost.setReportedList(new ArrayList<>());
 
         for (String key : weightByYear.keySet()) {
-            long weight = weightByYear.get(key);
-            long spending = spendingByYear.get(key);
-            LiveCost report = new LiveCost(Integer.valueOf(key), weight, spending, ((double) spending / weight));
+            long weight = weightByYear.getOrDefault(key, 0L) ;
+            long spending = spendingByYear.getOrDefault(key, 0L);
+            double costXKg = weight != 0 ? (double) spending / weight : -1;
+            LiveCost report = new LiveCost(Integer.valueOf(key), weight, spending, costXKg);
             liveCost.getReportedList().add(report);
         }
 
         liveCost.filterByYear(yearFrom, yearTo);
+
+        liveCost.getReportedList().sort(null);
 
         return new ResponseEntity<>(liveCost, HttpStatus.OK);
     }
@@ -528,6 +539,8 @@ public class ReportingController {
         }
 
         income.filterByYear(yearFrom, yearTo);
+
+        income.getReportedList().sort(null);
 
         return new ResponseEntity<>(income, HttpStatus.OK);
     }

@@ -1,5 +1,6 @@
 package com.cema.administration.domain.activity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,6 +40,7 @@ public class Activity implements Comparable<Activity> {
     @ApiModelProperty(notes = "The user name of the person who is going to complete this activity", example = "merlinds")
     private String workerUserName;
 
+    @JsonIgnore
     public int getExecutionYear(){
         return executionDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().getYear();
     }

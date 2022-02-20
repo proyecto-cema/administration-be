@@ -53,9 +53,9 @@ public class ActivityClientServiceImpl implements ActivityClientService {
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity entity = new HttpEntity("{}", httpHeaders);
         try {
-        ResponseEntity<List<Ultrasound>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Ultrasound>>() {
-        });
-        return responseEntity.getBody();
+            ResponseEntity<List<Ultrasound>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Ultrasound>>() {
+            });
+            return responseEntity.getBody();
         } catch (RestClientResponseException httpClientErrorException) {
             String response = httpClientErrorException.getResponseBodyAsString();
             ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
@@ -73,9 +73,9 @@ public class ActivityClientServiceImpl implements ActivityClientService {
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity entity = new HttpEntity("{}", httpHeaders);
         try {
-        ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
-        });
-        return responseEntity.getBody();
+            ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
+            });
+            return responseEntity.getBody();
         } catch (RestClientResponseException httpClientErrorException) {
             String response = httpClientErrorException.getResponseBodyAsString();
             ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
@@ -93,9 +93,9 @@ public class ActivityClientServiceImpl implements ActivityClientService {
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity entity = new HttpEntity("{}", httpHeaders);
         try {
-        ResponseEntity<List<Feeding>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Feeding>>() {
-        });
-        return responseEntity.getBody();
+            ResponseEntity<List<Feeding>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Feeding>>() {
+            });
+            return responseEntity.getBody();
         } catch (RestClientResponseException httpClientErrorException) {
             String response = httpClientErrorException.getResponseBodyAsString();
             ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
@@ -115,14 +115,14 @@ public class ActivityClientServiceImpl implements ActivityClientService {
         httpHeaders.add(AUTHORIZATION_HEADER, authToken);
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Weighing> entity = new HttpEntity<>(toSearch, httpHeaders);
-            try {
-        ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
-        });
-        return responseEntity.getBody();
-            } catch (RestClientResponseException httpClientErrorException) {
-                String response = httpClientErrorException.getResponseBodyAsString();
-                ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
-                throw new ValidationException(errorResponse.getMessage(), httpClientErrorException);
-            }
+        try {
+            ResponseEntity<List<Weighing>> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.POST, entity, new ParameterizedTypeReference<List<Weighing>>() {
+            });
+            return responseEntity.getBody();
+        } catch (RestClientResponseException httpClientErrorException) {
+            String response = httpClientErrorException.getResponseBodyAsString();
+            ErrorResponse errorResponse = mapper.readValue(response, ErrorResponse.class);
+            throw new ValidationException(errorResponse.getMessage(), httpClientErrorException);
+        }
     }
 }
