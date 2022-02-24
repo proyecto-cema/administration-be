@@ -16,7 +16,7 @@ public class FoodConsumption implements Reported<FoodConsumption> {
     @ApiModelProperty(notes = "The year for this data", example = "2015")
     private Integer year;
     @ApiModelProperty(notes = "The average amount of food eaten by this category in kilograms", example = "7000")
-    private Integer foodEaten;
+    private Long foodEaten;
     @ApiModelProperty(notes = "The category of the measured animal", example = "Vaca")
     private String category;
 

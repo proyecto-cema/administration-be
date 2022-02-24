@@ -34,11 +34,11 @@ public class Inoculation extends Activity {
 
     @Builder
     public Inoculation(UUID id, @NotEmpty(message = "Name is required") String name,
-                       @NotEmpty(message = "Type is required") @Pattern(regexp = "(?i)inoculation|feeding") String type,
+                       @NotEmpty(message = "Type is required") @Pattern(regexp = "(?i)inoculation|feeding|weighing|ultrasound|movement") String type,
                        String description, Date executionDate,
                        @NotEmpty(message = "Cuig is required") String establishmentCuig, Long dose, String brand,
-                       String drug, String product, String bovineTag, String batchName) {
-        super(id, name, type, description, executionDate, establishmentCuig);
+                       String drug, String product, String bovineTag, String batchName, String workerUserName) {
+        super(id, name, type, description, executionDate, establishmentCuig, workerUserName);
         this.dose = dose;
         this.brand = brand;
         this.drug = drug;

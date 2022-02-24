@@ -16,9 +16,9 @@ public class LiveCost implements Reported<LiveCost> {
     @ApiModelProperty(notes = "The year for this data", example = "2015")
     private Integer year;
     @ApiModelProperty(notes = "Kilogramos vivos", example = "1500.5")
-    private Integer liveWeight;
+    private Long liveWeight;
     @ApiModelProperty(notes = "Gastos para el periodo", example = "1123.5")
-    private Double spending;
+    private Long spending;
     @ApiModelProperty(notes = "Costo del kilogramo vivo", example = "1123.5")
     private Double cost;
 
