@@ -1,5 +1,6 @@
 package com.cema.administration.domain.report;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +19,7 @@ public class Disease implements Reported<Disease> {
     @ApiModelProperty(notes = "The number of infections if this disease", example = "72")
     private Integer infections;
     @ApiModelProperty(notes = "The name of the disease", example = "Aftosa")
+    @JsonFormat
     private String name;
 
     public void addOne() {
