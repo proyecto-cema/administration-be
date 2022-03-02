@@ -22,6 +22,7 @@ import com.cema.administration.services.client.activity.impl.ActivityClientServi
 import com.cema.administration.services.client.bovine.BovineClientService;
 import com.cema.administration.services.client.economic.EconomicClientService;
 import com.cema.administration.services.client.health.HealthClientService;
+import com.google.common.collect.ImmutableSet;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -40,12 +41,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -55,9 +59,8 @@ import java.util.stream.Collectors;
 public class ReportingController {
 
     private static final String BASE_URL = "/reporting/";
-
+    private static final Set<String> BOVINE_UNUSABLE_STATES = ImmutableSet.of("muerto", "vendido");
     private final Logger LOG = LoggerFactory.getLogger(ReportingController.class);
-
     private final ActivityClientServiceImpl activityClientService;
     private final BovineClientService bovineClientService;
     private final HealthClientService healthClientService;
@@ -119,8 +122,8 @@ public class ReportingController {
         for (Integer year : total.keySet()) {
             float totalCount = total.get(year);
             float positivesCount = positives.get(year);
-            Float percentage = (positivesCount / totalCount) * 100;
-            pregnancy.getReportedList().add(new Pregnancy(year, percentage));
+            double percentage = (positivesCount / totalCount) * 100;
+            pregnancy.getReportedList().add(new Pregnancy(year, round(percentage, 2)));
         }
 
         pregnancy.filterByYear(yearFrom, yearTo);
@@ -333,7 +336,7 @@ public class ReportingController {
             String tag = feeding.getBovineTag();
 
             Bovine bovine = bovineClientService.getBovine(tag);
-            if(bovine != null) {
+            if (bovine != null) {
                 String category = bovine.getCategory();
                 String key = category + year;
 
@@ -409,10 +412,10 @@ public class ReportingController {
         liveCost.setReportedList(new ArrayList<>());
 
         for (String key : weightByYear.keySet()) {
-            long weight = weightByYear.getOrDefault(key, 0L) ;
+            long weight = weightByYear.getOrDefault(key, 0L);
             long spending = spendingByYear.getOrDefault(key, 0L);
             double costXKg = weight != 0 ? (double) spending / weight : -1;
-            LiveCost report = new LiveCost(Integer.valueOf(key), weight, spending, costXKg);
+            LiveCost report = new LiveCost(Integer.valueOf(key), weight, spending, round(costXKg, 3));
             liveCost.getReportedList().add(report);
         }
 
@@ -442,7 +445,7 @@ public class ReportingController {
 
         LOG.info("Request to create live animals report");
 
-        List<Bovine> bovines = bovineClientService.getAllBovines();
+        List<Bovine> bovines = bovineClientService.getAllBovines().stream().filter(this::isInCorrectState).collect(Collectors.toList());
 
         Map<String, Live> reports = new HashMap<>();
 
@@ -543,6 +546,18 @@ public class ReportingController {
         income.getReportedList().sort(null);
 
         return new ResponseEntity<>(income, HttpStatus.OK);
+    }
+
+    private boolean isInCorrectState(Bovine bovine) {
+        return !BOVINE_UNUSABLE_STATES.contains(bovine.getStatus().toLowerCase(Locale.ROOT));
+    }
+
+    private double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = BigDecimal.valueOf(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 
 }
